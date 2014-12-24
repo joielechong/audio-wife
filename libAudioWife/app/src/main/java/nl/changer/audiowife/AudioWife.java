@@ -24,11 +24,6 @@
 
 package nl.changer.audiowife;
 
-import java.io.IOException;
-import java.util.ArrayList;
-import java.util.concurrent.TimeUnit;
-
-import android.app.Activity;
 import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
@@ -39,15 +34,17 @@ import android.util.Log;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
-import android.widget.ImageView;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import java.io.IOException;
+import java.util.ArrayList;
+import java.util.concurrent.TimeUnit;
 
 /***
  * A simple audio player wrapper for Android
  ***/
-public class AudioWife {
+public class AudioWife{
 
 	private static final String TAG = AudioWife.class.getSimpleName();
 
@@ -120,6 +117,10 @@ public class AudioWife {
 		return mAudioWife;
 	}
 
+    public MediaPlayer getMediaPlayer(){
+        return mMediaPlayer;
+    }
+
 	private Runnable mUpdateProgress = new Runnable() {
 
 		public void run() {
@@ -172,9 +173,9 @@ public class AudioWife {
 		setViewsVisibility();
 
 		mMediaPlayer.start();
-
 		setPausable();
 	}
+
 
 	/**
 	 * Ensure the views are visible before playing the audio.
@@ -218,6 +219,7 @@ public class AudioWife {
 
 		if (mMediaPlayer.isPlaying()) {
 			mMediaPlayer.pause();
+
 			setPlayable();
 		}
 	}
@@ -560,8 +562,14 @@ public class AudioWife {
 
 		// add default click listener to the top
 		// so that it is the one that gets fired first
-		mCompletionListeners.add(0, listener);
+        if(mCompletionListeners==null){
+            mCompletionListeners=new ArrayList<OnCompletionListener>();
+        }
 
+        if(listener!=null && !mCompletionListeners.contains(listener)) {
+            Log.d("tunacam","adding completion listener");
+            mCompletionListeners.add(0, listener);
+        }
 		return this;
 	}
 
@@ -592,8 +600,14 @@ public class AudioWife {
 	 ****/
 	private void initPlayer(Context ctx) {
 
-		mMediaPlayer = new MediaPlayer();
-		mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        if(mMediaPlayer==null) {
+            mMediaPlayer = new MediaPlayer();
+            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+        }
+        else{
+            pause();
+            mMediaPlayer.reset();
+        }
 
 		try {
 			mMediaPlayer.setDataSource(ctx, mUri);
@@ -742,11 +756,15 @@ public class AudioWife {
 	 * Releases the allocated resources.
 	 * 
 	 * <p>
-	 * Call {@link #init(android.content.Context, android.net.Uri, android.widget.SeekBar, android.view.View, android.view.View, android.widget.TextView)} before calling
+	 * Call {@link #init(android.content.Context, android.net.Uri), android.widget.SeekBar, android.view.View, android.view.View, android.widget.TextView)} before calling
 	 * {@link #play()}
 	 * </p>
 	 * */
 	public void release() {
+        if(mCompletionListeners!=null){
+            mCompletionListeners.clear();
+            mCompletionListeners=null;
+        }
 
 		if (mMediaPlayer != null) {
 			mMediaPlayer.stop();
