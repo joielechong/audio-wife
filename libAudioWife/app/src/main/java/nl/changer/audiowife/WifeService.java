@@ -20,9 +20,10 @@ import android.widget.TextView;
 /**
  * Created by Antonio Tari on 23/12/14.
  */
-public class WifeService extends Service implements AudioListener, MediaPlayer.OnPreparedListener,MediaPlayer.OnErrorListener,AudioManager.OnAudioFocusChangeListener {
+public class WifeService extends Service implements AudioListener,ForegroundNotificationListener, MediaPlayer.OnPreparedListener,MediaPlayer.OnErrorListener,AudioManager.OnAudioFocusChangeListener {
     private static final String ACTION_PLAY = "com.example.action.PLAY";
     private MediaPlayer mMediaPlayer=null;
+    Notification _currentNotification;
     WifiManager.WifiLock wifiLock;
     private final IBinder mBinder = new WifeBinder();
 
@@ -157,13 +158,20 @@ public class WifeService extends Service implements AudioListener, MediaPlayer.O
         PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
                 new Intent(getApplicationContext(), theActivity),
                 PendingIntent.FLAG_UPDATE_CURRENT);
-        Notification notification = new Notification();
-        notification.tickerText = songName;
-        notification.icon = iconRes;
-        notification.flags |= Notification.FLAG_ONGOING_EVENT;
-        notification.setLatestEventInfo(getApplicationContext(), "TunaCam",
+        _currentNotification = new Notification();
+        _currentNotification.tickerText = songName;
+        _currentNotification.icon = iconRes;
+        _currentNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+        _currentNotification.setLatestEventInfo(getApplicationContext(), "TunaCam",
                 "Playing: " + songName, pi);
-        startForeground(11111, notification);
+        showNotification();
+    }
+
+    private void showNotification(){
+        if(_currentNotification!=null){
+            startForeground(11111, _currentNotification);
+
+        }
     }
 
     @Override
@@ -177,6 +185,8 @@ public class WifeService extends Service implements AudioListener, MediaPlayer.O
                 .setTotalTimeView(totalTime)
                 .addOnCompletionListener(completionListener);
         initMediaPlayer();
+        //set the notification listener on audiowife
+        AudioWife.getInstance().setForegroundNotificationListener(this);
     }
 
     @Override
@@ -188,6 +198,7 @@ public class WifeService extends Service implements AudioListener, MediaPlayer.O
     @Override
     public void pause() {
         AudioWife.getInstance().pause();
+        stopForeground(true);
     }
 
     @Override
@@ -198,6 +209,18 @@ public class WifeService extends Service implements AudioListener, MediaPlayer.O
 
     public MediaPlayer getMediaPlayer(){
         return AudioWife.getInstance().getMediaPlayer();
+    }
+
+    @Override
+    public void addForeground() {
+        //the notification is initialized on play from the service
+        //the listener only takes care of adding/removing an existing notification using the AudioWife buttons
+        showNotification();
+    }
+
+    @Override
+    public void removeForeground() {
+        stopForeground(true);
     }
 
     public class WifeBinder extends Binder {

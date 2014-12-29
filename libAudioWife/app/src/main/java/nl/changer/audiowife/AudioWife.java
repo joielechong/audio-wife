@@ -174,6 +174,10 @@ public class AudioWife{
 
 		mMediaPlayer.start();
 		setPausable();
+
+        if(foregroundNotificationListener!=null){
+            foregroundNotificationListener.addForeground();
+        }
 	}
 
 
@@ -207,7 +211,13 @@ public class AudioWife{
 		}
 	}
 
-	/***
+    private ForegroundNotificationListener foregroundNotificationListener;
+
+    public void setForegroundNotificationListener(ForegroundNotificationListener foregroundNotificationListener) {
+        this.foregroundNotificationListener = foregroundNotificationListener;
+    }
+
+    /***
 	 * Pause the audio being played. Calling this method has no effect if the audio is already
 	 * paused
 	 */
@@ -221,6 +231,10 @@ public class AudioWife{
 			mMediaPlayer.pause();
 
 			setPlayable();
+
+            if(foregroundNotificationListener!=null){
+                foregroundNotificationListener.removeForeground();
+            }
 		}
 	}
 
@@ -764,6 +778,10 @@ public class AudioWife{
         if(mCompletionListeners!=null){
             mCompletionListeners.clear();
             mCompletionListeners=null;
+        }
+
+        if(foregroundNotificationListener!=null){
+            foregroundNotificationListener.removeForeground();
         }
 
 		if (mMediaPlayer != null) {
