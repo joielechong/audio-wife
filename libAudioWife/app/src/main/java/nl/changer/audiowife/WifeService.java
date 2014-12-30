@@ -151,6 +151,7 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
 
         if (mMediaPlayer != null) mMediaPlayer.release();
         if(wifiLock!=null)wifiLock.release();
+        AudioWife.getInstance().release();
     }
 
     private void showForegroundControls(Class theActivity,String songName,int iconRes){

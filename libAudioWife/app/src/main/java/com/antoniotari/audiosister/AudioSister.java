@@ -111,6 +111,11 @@ public class AudioSister {
             wifeService.pause();
     }
 
+    public void destroy(){
+        if(wifeService!=null)
+            wifeService.release();
+    }
+
     public String getPlayUrl(){
         return playUrl;
     }

@@ -227,15 +227,19 @@ public class AudioWife{
 			return;
 		}
 
-		if (mMediaPlayer.isPlaying()) {
-			mMediaPlayer.pause();
+        try {
+            if (mMediaPlayer.isPlaying()) {
+                mMediaPlayer.pause();
 
-			setPlayable();
+                setPlayable();
 
-            if(foregroundNotificationListener!=null){
-                foregroundNotificationListener.removeForeground();
+                if (foregroundNotificationListener != null) {
+                    foregroundNotificationListener.removeForeground();
+                }
             }
-		}
+        }catch (IllegalStateException e1){
+            e1.printStackTrace();
+        }
 	}
 
 	@Deprecated
