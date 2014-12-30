@@ -4,7 +4,6 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
-import android.media.MediaPlayer;
 import android.os.IBinder;
 import android.view.View;
 import android.widget.SeekBar;
@@ -12,6 +11,7 @@ import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
+import io.vov.vitamio.MediaPlayer;
 import nl.changer.audiowife.WifeService;
 
 /**

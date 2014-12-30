@@ -25,9 +25,6 @@
 package nl.changer.audiowife;
 
 import android.content.Context;
-import android.media.AudioManager;
-import android.media.MediaPlayer;
-import android.media.MediaPlayer.OnCompletionListener;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
@@ -40,6 +37,9 @@ import android.widget.TextView;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.concurrent.TimeUnit;
+
+import io.vov.vitamio.MediaPlayer;
+import io.vov.vitamio.MediaPlayer.OnCompletionListener;
 
 /***
  * A simple audio player wrapper for Android
@@ -97,7 +97,7 @@ public class AudioWife{
 	/****
 	 * Array to hold custom completion listeners
 	 ****/
-	private ArrayList<OnCompletionListener> mCompletionListeners = new ArrayList<OnCompletionListener>();
+	private ArrayList<io.vov.vitamio.MediaPlayer.OnCompletionListener> mCompletionListeners = new ArrayList<OnCompletionListener>();
 
 	private ArrayList<View.OnClickListener> mPlayListeners = new ArrayList<View.OnClickListener>();
 
@@ -131,9 +131,9 @@ public class AudioWife{
 
 			if (mProgressUpdateHandler != null && mMediaPlayer.isPlaying()) {
 				mSeekBar.setProgress((int) mMediaPlayer.getCurrentPosition());
-				int currentTime = mMediaPlayer.getCurrentPosition();
-				updatePlaytime(currentTime);
-				updateRuntime(currentTime);
+				long currentTime = mMediaPlayer.getCurrentPosition();
+				updatePlaytime((int) currentTime);
+				updateRuntime((int) currentTime);
 				// repeat the process
 				mProgressUpdateHandler.postDelayed(this, AUDIO_PROGRESS_UPDATE_TIME);
 			} else {
@@ -619,8 +619,8 @@ public class AudioWife{
 	private void initPlayer(Context ctx) {
 
         if(mMediaPlayer==null) {
-            mMediaPlayer = new MediaPlayer();
-            mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
+            mMediaPlayer = new MediaPlayer(ctx);
+            //mMediaPlayer.setAudioStreamType(AudioManager.STREAM_MUSIC);
         }
         else{
             pause();
