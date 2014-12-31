@@ -4,14 +4,15 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
+import android.media.MediaPlayer;
 import android.os.IBinder;
+import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
-import io.vov.vitamio.MediaPlayer;
 import nl.changer.audiowife.WifeService;
 
 /**
@@ -111,9 +112,19 @@ public class AudioSister {
             wifeService.pause();
     }
 
-    public void destroy(){
-        if(wifeService!=null)
+    public void destroy(Context context){
+        if(wifeService!=null) {
             wifeService.release();
+            //wifeService.stopSelf();
+            wifeService=null;
+        }
+        if (mConnection != null) {
+            try {
+                Log.d("wifeService", "Focus onDestroy() attempted to unbind service");
+                context.unbindService(mConnection);
+                //mConnection = null;
+            }catch (Exception e){}
+        }
     }
 
     public String getPlayUrl(){

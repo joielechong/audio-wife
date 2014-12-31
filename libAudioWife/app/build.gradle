@@ -26,7 +26,7 @@ android {
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-    compile project(':vitamio')
+    //compile project(':vitamio')
 }
 
 //apply from: '../maven_push.gradle'
