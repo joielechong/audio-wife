@@ -335,7 +335,8 @@ public class AudioWife{
 		}
 
 		if (totalDuration < 0) {
-			throw new IllegalArgumentException(ERROR_PLAYTIME_TOTAL_NEGATIVE);
+            totalDuration=0;//TODO should I throw exception?
+			//throw new IllegalArgumentException(ERROR_PLAYTIME_TOTAL_NEGATIVE);
 		}
 
 		// set total time as the audio is being played
