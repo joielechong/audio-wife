@@ -178,7 +178,7 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
 
     @Override
     public void init(String currentUrl,View playBtn,View stopBtn,SeekBar seekBar,TextView elapsed,TextView totalTime,MediaPlayer.OnCompletionListener completionListener) {
-        AudioWife.getInstance().init(this, new Uri.Builder().path(currentUrl).build())
+        AudioWife.getInstance().init(this, Uri.parse(currentUrl!=null?currentUrl:"") /*new Uri.Builder().path(currentUrl).build()*/)
                 //.useDefaultUi(_mainLayout, getLayoutInflater());
                 .setPlayView(playBtn)
                 .setPauseView(stopBtn)
