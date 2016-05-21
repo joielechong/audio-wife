@@ -150,9 +150,12 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
         super.onDestroy();
         Log.d("wifeservice","onDestroy");
 
-        if (mMediaPlayer != null) mMediaPlayer.release();
-        if(wifiLock!=null)wifiLock.release();
-        AudioWife.getInstance().release();
+        try {
+            if (mMediaPlayer != null) mMediaPlayer.release();
+            if(wifiLock!=null)wifiLock.release();
+            AudioWife.getInstance().release();
+        }catch (IllegalStateException e) {
+        }
     }
 
     private void showForegroundControls(Class theActivity,String songName,int iconRes){
