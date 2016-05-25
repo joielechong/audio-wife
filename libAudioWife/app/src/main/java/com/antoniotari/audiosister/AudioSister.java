@@ -13,6 +13,7 @@ import android.widget.TextView;
 
 import java.lang.ref.WeakReference;
 
+import nl.changer.audiowife.AudioWife;
 import nl.changer.audiowife.WifeService;
 
 /**
@@ -65,7 +66,7 @@ public class AudioSister {
 //        wifeService.pause();
 //    }
 
-    private void initializeWifeService(){
+    private void initializeWifeService() {
         wifeService.init(playUrl,weakPlay.get(),weakStop.get(),weakSeekBar.get(),weakElapsedTime.get(),weakTotalTime.get(),completionListener);
     }
 
@@ -89,6 +90,14 @@ public class AudioSister {
             if(audioSisterListener!=null) {
                 audioSisterListener.onInitComplete(playUrl,weakPlay.get());
             }
+        }
+    }
+
+    public void kill() {
+        if(wifeService!=null){
+            wifeService.stopSelf();
+            wifeService = null;
+            AudioWife.getInstance().release();
         }
     }
 
