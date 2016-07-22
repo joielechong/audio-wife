@@ -167,7 +167,7 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
         _currentNotification.tickerText = songName;
         _currentNotification.icon = iconRes;
         _currentNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-        _currentNotification.setLatestEventInfo(getApplicationContext(), "TunaCam",
+        _currentNotification.setLatestEventInfo(getApplicationContext(), getApplicationInfo().loadLabel(getPackageManager()).toString(),
                 "Playing: " + songName, pi);
         showNotification();
     }
