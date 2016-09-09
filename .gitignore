@@ -33,7 +33,7 @@ Thumbs.db
 build/
 secring.gpg
 Optional - for older project format, add this section to your gitignore file:
-
+*.iml
 
 /*/out
 /*/*/build
