@@ -12,6 +12,7 @@ import android.net.wifi.WifiManager;
 import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.v7.app.NotificationCompat;
 import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
@@ -163,12 +164,21 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
         PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
                 new Intent(getApplicationContext(), theActivity),
                 PendingIntent.FLAG_UPDATE_CURRENT);
-        _currentNotification = new Notification();
-        _currentNotification.tickerText = songName;
-        _currentNotification.icon = iconRes;
+        //_currentNotification = new Notification();
+        //_currentNotification.tickerText = songName;
+        //_currentNotification.icon = iconRes;
+        //_currentNotification.flags |= Notification.FLAG_ONGOING_EVENT;
+        //_currentNotification.setLatestEventInfo(getApplicationContext(), getApplicationInfo().loadLabel(getPackageManager()).toString(),
+        //        "Playing: " + songName, pi);
+
+        _currentNotification = new NotificationCompat.Builder(this)
+                .setContentIntent(pi)
+                .setSmallIcon(iconRes)
+                .setTicker(songName)
+                .setContentTitle(getApplicationInfo().loadLabel(getPackageManager()).toString())
+                .setContentText("Playing: " + songName)
+                .build();
         _currentNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-        _currentNotification.setLatestEventInfo(getApplicationContext(), getApplicationInfo().loadLabel(getPackageManager()).toString(),
-                "Playing: " + songName, pi);
         showNotification();
     }
 
