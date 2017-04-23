@@ -13,6 +13,8 @@ import android.os.Binder;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v7.app.NotificationCompat;
+import android.telephony.PhoneStateListener;
+import android.telephony.TelephonyManager;
 import android.util.Log;
 import android.view.View;
 import android.widget.SeekBar;
@@ -28,6 +30,28 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
     Notification _currentNotification;
     WifiManager.WifiLock wifiLock;
     private final IBinder mBinder = new WifeBinder();
+    private WifePhoneStateListener phoneStateListener = new WifePhoneStateListener();
+
+    private class WifePhoneStateListener extends PhoneStateListener {
+        /**
+         * Callback invoked when device call state changes.
+         * @param state call state
+         * @param incomingNumber incoming call phone number. If application does not have
+         * {@link android.Manifest.permission#READ_PHONE_STATE READ_PHONE_STATE} permission, an empty
+         * string will be passed as an argument.
+         *
+         * @see TelephonyManager#CALL_STATE_IDLE
+         * @see TelephonyManager#CALL_STATE_RINGING
+         * @see TelephonyManager#CALL_STATE_OFFHOOK
+         */
+        public void onCallStateChanged(int state, String incomingNumber) {
+            // default implementation empty
+            if(state == TelephonyManager.CALL_STATE_RINGING) {
+                pause();
+            }
+        }
+    }
+
 
     private void initMediaPlayer(){
         mMediaPlayer=AudioWife.getInstance().getMediaPlayer();
@@ -41,6 +65,7 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
             //mMediaPlayer.setOnErrorListener(this);
             //mMediaPlayer.prepareAsync(); // prepare async to not block main thread
         }
+        registerPhoneCallListener();
     }
 
     /**
@@ -112,6 +137,16 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
     @Override
     public boolean onError(MediaPlayer mediaPlayer, int i, int i2) {
         return false;
+    }
+
+    private void registerPhoneCallListener() {
+        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_CALL_STATE);
+    }
+
+    private void unregisterPhoneCallListener() {
+        TelephonyManager telephonyManager = (TelephonyManager) getSystemService(TELEPHONY_SERVICE);
+        telephonyManager.listen(phoneStateListener, PhoneStateListener.LISTEN_NONE);
     }
 
     @Override
