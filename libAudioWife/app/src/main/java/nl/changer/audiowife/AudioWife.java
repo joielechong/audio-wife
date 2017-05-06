@@ -28,6 +28,7 @@ import android.content.Context;
 import android.media.AudioManager;
 import android.media.MediaPlayer;
 import android.media.MediaPlayer.OnCompletionListener;
+import android.media.ToneGenerator;
 import android.net.Uri;
 import android.os.Handler;
 import android.util.Log;
@@ -64,6 +65,7 @@ public class AudioWife{
 	private static final String ERROR_PLAYTIME_TOTAL_NEGATIVE = "Total playback time cannot be negative";
 
 	private Handler mProgressUpdateHandler;
+	private Handler mediaButtonHandler;
 
 	private MediaPlayer mMediaPlayer;
 
@@ -78,6 +80,8 @@ public class AudioWife{
 
 	private View mPlayButton;
 	private View mPauseButton;
+	private View mNextBtn;
+	private View mPrevBtn;
 
 	/***
 	 * Indicates the current run-time of the audio being played
@@ -398,6 +402,8 @@ public class AudioWife{
 
 		initPlayer(ctx);
 
+		registerMediaButtonHandler(ctx);
+
 		return this;
 	}
 
@@ -502,6 +508,15 @@ public class AudioWife{
 				}
 			}
 		});
+	}
+
+
+	public void setNextView(View next) {
+		mNextBtn = next;
+	}
+
+	public void setPrevView(View prev) {
+		mPrevBtn = prev;
 	}
 
 	/***
@@ -771,6 +786,85 @@ public class AudioWife{
 		return this;
 	}
 
+	private void registerMediaButtonHandler(final Context context) {
+		if (mediaButtonHandler != null) {
+			return;
+		}
+		mediaButtonHandler = new Handler();
+		HeadsetActionButtonReceiver.delegate = new HeadsetActionButtonReceiver.Delegate() {
+			@Override
+			public void onMediaButtonSingleClick() {
+				final MediaPlayer mediaPlayer = getMediaPlayer();
+				if (mediaPlayer != null) {
+					mediaButtonHandler.post(new Runnable() {
+						@Override
+						public void run() {
+							playBeep(1);
+						}
+					});
+					mediaButtonHandler.post(new Runnable() {
+						@Override
+						public void run() {
+							if (mediaPlayer.isPlaying()) {
+								mPauseButton.performClick();
+							} else {
+								mPlayButton.performClick();
+							}
+						}
+					});
+				}
+			}
+
+			@Override
+			public void onMediaButtonDoubleClick() {
+				mediaButtonHandler.post(new Runnable() {
+					@Override
+					public void run() {
+						playBeep(2);
+					}
+				});
+				if (mNextBtn != null) {
+					mediaButtonHandler.post(new Runnable() {
+						@Override
+						public void run() {
+							mNextBtn.performClick();
+						}
+					});
+				}
+			}
+
+			@Override
+			public void onMediaButtonTripleClick() {
+				mediaButtonHandler.post(new Runnable() {
+					@Override
+					public void run() {
+						playBeep(3);
+					}
+				});
+				if (mPrevBtn != null) {
+					mediaButtonHandler.post(new Runnable() {
+						@Override
+						public void run() {
+							mPrevBtn.performClick();
+						}
+					});
+				}
+			}
+		};
+		HeadsetActionButtonReceiver.register(context);
+	}
+
+	private void unregisterMediaButtonHandler() {
+        HeadsetActionButtonReceiver.unregister();
+		mediaButtonHandler = null;
+	}
+
+	private void playBeep(int count) {
+		ToneGenerator toneGen = new ToneGenerator(AudioManager.STREAM_MUSIC, 100);
+		toneGen.startTone(ToneGenerator.TONE_CDMA_PIP, count * 200);
+	}
+
+
 	/***
 	 * Releases the allocated resources.
 	 * 
@@ -780,6 +874,8 @@ public class AudioWife{
 	 * </p>
 	 * */
 	public void release() {
+		unregisterMediaButtonHandler();
+
         if(mCompletionListeners!=null){
             mCompletionListeners.clear();
             mCompletionListeners=null;
