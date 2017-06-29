@@ -102,7 +102,7 @@ public class AudioSister {
         }
     }
 
-    public void playNew(String streamUrl, String notificationText, int durationSeconds){
+    public void playNew(String streamUrl, String notificationText, int durationSeconds) {
         if(wifeService!=null) {
             currentNotificationText = notificationText;
             currentDurationSeconds = durationSeconds;
