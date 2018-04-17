@@ -11,6 +11,8 @@ import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.antoniotari.audiosister.models.Song;
+
 import java.lang.ref.WeakReference;
 
 import nl.changer.audiowife.AudioWife;
@@ -28,7 +30,7 @@ public class AudioSister {
     private WeakReference<TextView> weakElapsedTime;
     private WeakReference<SeekBar> weakSeekBar;
     private String playUrl;
-    private String currentNotificationText="";
+    private Song currentSong;
     private int currentDurationSeconds = -1;
     private Class currentActivityClass;
     private int currentForegroundDrawable;
@@ -102,19 +104,19 @@ public class AudioSister {
         }
     }
 
-    public void playNew(String streamUrl, String notificationText, int durationSeconds) {
+    public void playNew(String streamUrl, Song song, int durationSeconds) {
         if(wifeService!=null) {
-            currentNotificationText = notificationText;
+            currentSong = song;
             currentDurationSeconds = durationSeconds;
             playUrl = streamUrl;
             initializeWifeService();
-            wifeService.play(currentActivityClass, currentNotificationText, currentDurationSeconds, currentForegroundDrawable);
+            wifeService.play(currentActivityClass, song, currentDurationSeconds, currentForegroundDrawable);
         }
     }
 
     public void playCurrent(){
         if(wifeService!=null) {
-            wifeService.play(currentActivityClass, currentNotificationText, currentDurationSeconds, currentForegroundDrawable);
+            wifeService.play(currentActivityClass, currentSong, currentDurationSeconds, currentForegroundDrawable);
         }
     }
 
@@ -142,8 +144,8 @@ public class AudioSister {
         return playUrl;
     }
 
-    public String getCurrentNotificationText() {
-        return currentNotificationText;
+    public Song getCurrentNotificationText() {
+        return currentSong;
     }
 
     public void setCurrentForegroundDrawable(int currentForegroundDrawable) {

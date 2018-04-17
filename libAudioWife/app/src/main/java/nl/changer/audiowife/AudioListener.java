@@ -5,13 +5,15 @@ import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
 
+import com.antoniotari.audiosister.models.Song;
+
 
 /**
  * Created by antonio on 23/12/14.
  */
 public interface AudioListener {
-    public void init(String currentUrl,View playBtn,View stopBtn,SeekBar seekBar,TextView elapsed,TextView totalTime,MediaPlayer.OnCompletionListener completionListener);
-    public void play(Class theActivity,String songName,int durationSeconds,int iconRes);
-    public void pause();
-    public void release();
+    void init(String currentUrl,View playBtn,View stopBtn,SeekBar seekBar,TextView elapsed,TextView totalTime,MediaPlayer.OnCompletionListener completionListener);
+    void play(Class theActivity,Song song,int durationSeconds,int iconRes);
+    void pause();
+    void release();
 }
