@@ -5,6 +5,6 @@ package nl.changer.audiowife;
  * listener only takes care of adding/removing an existing notification using the AudioWife buttons
  */
 public interface ForegroundNotificationListener {
-    public void addForeground();
-    public void removeForeground();
+    void addForeground();
+    void removeForeground();
 }

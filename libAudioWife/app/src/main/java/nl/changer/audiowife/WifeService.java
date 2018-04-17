@@ -1,36 +1,80 @@
 package nl.changer.audiowife;
 
+import android.annotation.TargetApi;
 import android.app.Notification;
+import android.app.NotificationManager;
 import android.app.PendingIntent;
 import android.app.Service;
+import android.content.BroadcastReceiver;
 import android.content.Context;
 import android.content.Intent;
+import android.content.IntentFilter;
+import android.graphics.Bitmap;
+import android.graphics.Canvas;
+import android.graphics.Color;
+import android.graphics.Paint;
+import android.graphics.Rect;
 import android.media.AudioManager;
+import android.media.MediaMetadata;
 import android.media.MediaPlayer;
+import android.media.Rating;
+import android.media.session.MediaController;
+import android.media.session.MediaSession;
+import android.media.session.MediaSessionManager;
 import android.net.Uri;
 import android.net.wifi.WifiManager;
 import android.os.Binder;
+import android.os.Build;
 import android.os.IBinder;
 import android.os.PowerManager;
+import android.support.annotation.RequiresApi;
 import android.support.v4.app.NotificationCompat;
 import android.telephony.PhoneStateListener;
 import android.telephony.TelephonyManager;
 import android.util.Log;
+import android.util.TypedValue;
 import android.view.View;
 import android.widget.SeekBar;
 import android.widget.TextView;
+
+import com.antoniotari.audiosister.ScreenOffReceiver;
+import com.antoniotari.audiosister.models.Song;
+
+import static nl.changer.audiowife.WifeService.MediaActions.ACTION_FAST_FORWARD;
+import static nl.changer.audiowife.WifeService.MediaActions.ACTION_NEXT;
+import static nl.changer.audiowife.WifeService.MediaActions.ACTION_PAUSE;
+import static nl.changer.audiowife.WifeService.MediaActions.ACTION_PLAY;
+import static nl.changer.audiowife.WifeService.MediaActions.ACTION_PREVIOUS;
+import static nl.changer.audiowife.WifeService.MediaActions.ACTION_REWIND;
+import static nl.changer.audiowife.WifeService.MediaActions.ACTION_STOP;
 
 
 /**
  * Created by Antonio Tari on 23/12/14.
  */
 public class WifeService extends Service implements AudioListener,ForegroundNotificationListener, MediaPlayer.OnPreparedListener,MediaPlayer.OnErrorListener,AudioManager.OnAudioFocusChangeListener {
-    private static final String ACTION_PLAY = "com.example.action.PLAY";
-    private MediaPlayer mMediaPlayer=null;
-    Notification _currentNotification;
-    WifiManager.WifiLock wifiLock;
+
+    private MediaPlayer mMediaPlayer = null;
+    private MediaSessionManager mManager;
+    private MediaSession mSession;
+    private MediaController mController;
+    private Song mCurrentSong = null;
+    private PendingIntent mActivityPendingIntent;
+
+    private Notification _currentNotification;
+    private WifiManager.WifiLock wifiLock;
     private final IBinder mBinder = new WifeBinder();
     private WifePhoneStateListener phoneStateListener = new WifePhoneStateListener();
+
+    class MediaActions {
+        public static final String ACTION_PLAY = "action_play";
+        public static final String ACTION_PAUSE = "action_pause";
+        public static final String ACTION_REWIND = "action_rewind";
+        public static final String ACTION_FAST_FORWARD = "action_fast_foward";
+        public static final String ACTION_NEXT = "action_next";
+        public static final String ACTION_PREVIOUS = "action_previous";
+        public static final String ACTION_STOP = "action_stop";
+    }
 
     private class WifePhoneStateListener extends PhoneStateListener {
         /**
@@ -52,13 +96,20 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
         }
     }
 
+    private void generatePlayNotification() {
+        buildNotification( generateAction( android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE ) );
+    }
+    private void generatePauseNotification() {
+        Log.d("MediaPlayerService","generatePauseNotification");
+        buildNotification(generateAction(android.R.drawable.ic_media_play, "Play", ACTION_PLAY));
+    }
 
-    private void initMediaPlayer(){
+    private void initMediaPlayer() {
         mMediaPlayer=AudioWife.getInstance().getMediaPlayer();
         if(mMediaPlayer!=null) {
             mMediaPlayer.setWakeMode(getApplicationContext(), PowerManager.PARTIAL_WAKE_LOCK);
             wifiLock = ((WifiManager) getApplicationContext().getSystemService(Context.WIFI_SERVICE))
-                    .createWifiLock(WifiManager.WIFI_MODE_FULL, "mylock");
+                    .createWifiLock(WifiManager.WIFI_MODE_FULL, "wifelock");
             wifiLock.acquire();
 
             //mMediaPlayer.setOnPreparedListener(this);
@@ -66,6 +117,82 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
             //mMediaPlayer.prepareAsync(); // prepare async to not block main thread
         }
         registerPhoneCallListener();
+
+        if (mController==null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            //mManager = (MediaSessionManager) getSystemService(Context.MEDIA_SESSION_SERVICE);
+        }
+
+    }
+
+    @TargetApi(Build.VERSION_CODES.KITKAT_WATCH)
+    private Notification.Action generateAction(int icon, String title, String intentAction ) {
+        Intent intent = new Intent( getApplicationContext(), WifeService.class );
+        intent.setAction(intentAction);
+        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 1, intent, 0);
+        return new Notification.Action.Builder(icon, title, pendingIntent).build();
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void buildNotification(Notification.Action action ) {
+
+        mSession = new MediaSession(getApplicationContext(), "wifeservicesession");
+        mController = new MediaController(getApplicationContext(), mSession.getSessionToken());
+
+        if (mCurrentSong == null) {
+            //mCurrentSong= new Song("","");
+            return;
+        }
+
+
+        mSession.setMetadata(new MediaMetadata.Builder()
+                .putBitmap(MediaMetadata.METADATA_KEY_ALBUM_ART, mCurrentSong.getArt())
+                .putString(MediaMetadata.METADATA_KEY_ARTIST, mCurrentSong.getArtist())
+                .putString(MediaMetadata.METADATA_KEY_ALBUM, mCurrentSong.getAlbum())
+                .putString(MediaMetadata.METADATA_KEY_TITLE, mCurrentSong.getTitle())
+                .build());
+        // Indicate you're ready to receive media commands
+        mSession.setActive(true);
+        mSession.setCallback(new MediaSessionCallbacks());
+        // Indicate you want to receive transport controls via your Callback
+        mSession.setFlags(MediaSession.FLAG_HANDLES_TRANSPORT_CONTROLS);
+
+        Intent intent = new Intent( getApplicationContext(), WifeService.class );
+        intent.setAction( ACTION_STOP );
+        PendingIntent pendingIntent = PendingIntent.getService(getApplicationContext(), 1, intent, 0);
+        Notification.Builder builder = new Notification.Builder( this )
+                .setStyle(new Notification.MediaStyle()
+                        // Attach our MediaSession token
+                        .setMediaSession(mSession.getSessionToken())
+                        // Show our playback controls in the compat view
+                        .setShowActionsInCompactView(0))
+                .setSmallIcon(R.drawable.ic_launcher)
+                .setContentTitle(mCurrentSong.getTitle())
+                .setContentText(mCurrentSong.getArtist())
+                .setVisibility(Notification.VISIBILITY_PUBLIC)
+                //.setLargeIcon(image)
+                .setDeleteIntent( pendingIntent )
+                .setShowWhen(false)
+                .setColor(getThemeAccentColor());
+
+        if (mActivityPendingIntent != null) {
+            builder.setContentIntent(mActivityPendingIntent);
+        }
+
+        //builder.addAction( generateAction( android.R.drawable.ic_media_previous, "Previous", ACTION_PREVIOUS ) );
+        //builder.addAction( generateAction( android.R.drawable.ic_media_rew, "Rewind", ACTION_REWIND ) );
+        builder.addAction( action );
+        //builder.addAction( generateAction( android.R.drawable.ic_media_ff, "Fast Foward", ACTION_FAST_FORWARD ) );
+        //builder.addAction( generateAction( android.R.drawable.ic_media_next, "Next", ACTION_NEXT ) );
+        //style.setShowActionsInCompactView(0,1,2,3,4);
+
+        NotificationManager notificationManager = (NotificationManager) getSystemService( Context.NOTIFICATION_SERVICE );
+        notificationManager.notify( 1, builder.build() );
+    }
+
+    public int getThemeAccentColor () {
+        final TypedValue value = new TypedValue();
+        getTheme().resolveAttribute (R.attr.colorAccent, value, true);
+        return value.data;
     }
 
     /**
@@ -75,6 +202,20 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
     @Override
     public void onCreate(){
         super.onCreate();
+
+        // REGISTER RECEIVER THAT HANDLES SCREEN ON AND SCREEN OFF LOGIC
+        // to show the notification on lock screen
+        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+        filter.addAction(Intent.ACTION_SCREEN_OFF);
+        BroadcastReceiver mReceiver = new BroadcastReceiver() {
+            @Override
+            public void onReceive(Context context, Intent intent) {
+                if (mMediaPlayer!=null && mMediaPlayer.isPlaying()) {
+                    generatePlayNotification();
+                }
+            }
+        };
+        registerReceiver(mReceiver, filter);
     }
 
     /**
@@ -104,6 +245,8 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
                 default:
                     //not restarted
             }
+
+            handleIntent(intent);
         }
 
 
@@ -181,24 +324,40 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
         }
     }
 
-    @Override
-    public void onDestroy() {
-        super.onDestroy();
-        Log.d("wifeservice","onDestroy");
-
+    private void clear() {
         try {
             if (mMediaPlayer != null) mMediaPlayer.release();
             if(wifiLock!=null)wifiLock.release();
             AudioWife.getInstance().release();
-        }catch (IllegalStateException e) {
+            if (mSession!=null && Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+                mSession.release();
+            }
+        }catch (Exception e) {
         }
     }
 
-    private void showForegroundControls(Class theActivity,String songName,int iconRes){
-        // assign the song name to songName
-        PendingIntent pi = PendingIntent.getActivity(getApplicationContext(), 0,
+    @Override
+    public void onDestroy() {
+        super.onDestroy();
+        Log.d("wifeservice","onDestroy");
+        clear();
+    }
+
+    @Override
+    public boolean onUnbind(Intent intent) {
+        clear();
+        return super.onUnbind(intent);
+    }
+
+    private PendingIntent createActivityPendingIntent(Class theActivity) {
+        return PendingIntent.getActivity(getApplicationContext(), 0,
                 new Intent(getApplicationContext(), theActivity),
                 PendingIntent.FLAG_UPDATE_CURRENT);
+    }
+
+    private void showForegroundControls(Class theActivity, String songName, int iconRes){
+        // assign the song name to songName
+        PendingIntent pi = createActivityPendingIntent(theActivity);
         //_currentNotification = new Notification();
         //_currentNotification.tickerText = songName;
         //_currentNotification.icon = iconRes;
@@ -240,16 +399,27 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
     }
 
     @Override
-    public void play(Class theActivity,String songName,int durationSeconds, int iconRes) {
+    public void play(Class theActivity, Song song, int durationSeconds, int iconRes) {
+        mCurrentSong = song;
+        mActivityPendingIntent = createActivityPendingIntent(theActivity);
         AudioWife.getInstance().setDuration(durationSeconds * 1000L);
         AudioWife.getInstance().play();
-        showForegroundControls(theActivity,songName,iconRes);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            generatePlayNotification();
+        } else {
+            showForegroundControls(theActivity, song.getArtist() +" - "+song.getTitle(), iconRes);
+        }
     }
 
     @Override
     public void pause() {
+        Log.d("MediaPlayerService","pause");
         AudioWife.getInstance().pause();
-        stopForeground(true);
+        if (Build.VERSION.SDK_INT >= Build.VERSION_CODES.LOLLIPOP) {
+            generatePauseNotification();
+        } else {
+            stopForeground(true);
+        }
     }
 
     @Override
@@ -258,7 +428,7 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
         stopForeground(true);
     }
 
-    public MediaPlayer getMediaPlayer(){
+    public MediaPlayer getMediaPlayer() {
         return AudioWife.getInstance().getMediaPlayer();
     }
 
@@ -274,9 +444,105 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
         stopForeground(true);
     }
 
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    private void handleIntent(Intent intent ) {
+        if( intent == null || intent.getAction() == null || mController == null) {
+            return;
+        }
+
+        String action = intent.getAction();
+
+        if( action.equalsIgnoreCase(ACTION_PLAY)) {
+            mController.getTransportControls().play();
+        } else if( action.equalsIgnoreCase( ACTION_PAUSE ) ) {
+            mController.getTransportControls().pause();
+        } else if( action.equalsIgnoreCase( ACTION_FAST_FORWARD ) ) {
+            mController.getTransportControls().fastForward();
+        } else if( action.equalsIgnoreCase( ACTION_REWIND ) ) {
+            mController.getTransportControls().rewind();
+        } else if( action.equalsIgnoreCase( ACTION_PREVIOUS ) ) {
+            mController.getTransportControls().skipToPrevious();
+        } else if( action.equalsIgnoreCase( ACTION_NEXT ) ) {
+            mController.getTransportControls().skipToNext();
+        } else if( action.equalsIgnoreCase( ACTION_STOP ) ) {
+            mController.getTransportControls().stop();
+        }
+    }
+
     public class WifeBinder extends Binder {
         public WifeService getService() {
             return WifeService.this;
+        }
+    }
+
+    @TargetApi(Build.VERSION_CODES.LOLLIPOP)
+    class MediaSessionCallbacks extends MediaSession.Callback {
+        @Override
+        public void onPlay() {
+            super.onPlay();
+            Log.e( "MediaPlayerService", "onPlay");
+            AudioWife.getInstance().play();
+            generatePlayNotification();
+        }
+
+        @Override
+        public void onPause() {
+            super.onPause();
+            Log.e( "MediaPlayerService", "onPause");
+            pause();
+        }
+
+        @Override
+        public void onSkipToNext() {
+            super.onSkipToNext();
+            Log.e( "MediaPlayerService", "onSkipToNext");
+            //Change media here
+            buildNotification( generateAction( android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE ) );
+        }
+
+        @Override
+        public void onSkipToPrevious() {
+            super.onSkipToPrevious();
+            Log.e( "MediaPlayerService", "onSkipToPrevious");
+            //Change media here
+            buildNotification( generateAction( android.R.drawable.ic_media_pause, "Pause", ACTION_PAUSE ) );
+        }
+
+        @Override
+        public void onFastForward() {
+            super.onFastForward();
+            Log.e( "MediaPlayerService", "onFastForward");
+            //Manipulate current media here
+        }
+
+        @Override
+        public void onRewind() {
+            super.onRewind();
+            Log.e( "MediaPlayerService", "onRewind");
+            //Manipulate current media here
+        }
+
+        @Override
+        public void onStop() {
+            super.onStop();
+            Log.e( "MediaPlayerService", "onStop");
+            pause();
+            //Stop media player here
+            NotificationManager notificationManager = (NotificationManager) getApplicationContext().getSystemService(Context.NOTIFICATION_SERVICE);
+            notificationManager.cancel( 1 );
+            Intent intent = new Intent( getApplicationContext(), WifeService.class );
+            stopService( intent );
+        }
+
+        @Override
+        public void onSeekTo(long pos) {
+            super.onSeekTo(pos);
+        }
+
+        @Override
+        public void onSetRating(Rating rating) {
+            super.onSetRating(rating);
         }
     }
 }
