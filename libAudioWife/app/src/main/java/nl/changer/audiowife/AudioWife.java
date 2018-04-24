@@ -153,6 +153,7 @@ public class AudioWife{
 	 * played.
 	 ****/
 	public void play() {
+		Log.e( "MediaPlayerService", "AudioWife Play");
 
 		// if play button itself is null, the whole purpose of AudioWife is
 		// defeated.
@@ -180,7 +181,7 @@ public class AudioWife{
 		mMediaPlayer.start();
 		setPausable();
 
-        if(foregroundNotificationListener!=null){
+        if(foregroundNotificationListener!=null) {
             foregroundNotificationListener.addForeground();
         }
 	}
@@ -670,7 +671,7 @@ public class AudioWife{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-
+		mMediaPlayer.setOnPreparedListener();
 		mMediaPlayer.setOnCompletionListener(mOnCompletion);
 	}
 

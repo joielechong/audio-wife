@@ -5,6 +5,7 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.ServiceConnection;
 import android.media.MediaPlayer;
+import android.os.AsyncTask;
 import android.os.IBinder;
 import android.util.Log;
 import android.view.View;
@@ -16,6 +17,7 @@ import com.antoniotari.audiosister.models.Song;
 import java.lang.ref.WeakReference;
 
 import nl.changer.audiowife.AudioWife;
+import nl.changer.audiowife.NotificationControlsListener;
 import nl.changer.audiowife.WifeService;
 
 /**
@@ -37,7 +39,7 @@ public class AudioSister {
     private MediaPlayer.OnCompletionListener completionListener;
     private AudioSisterListener audioSisterListener;
 
-    private AudioSister(){
+    private AudioSister() {
     }
 
     private ServiceConnection mConnection = new ServiceConnection() {
@@ -140,6 +142,9 @@ public class AudioSister {
         }
     }
 
+    public void setNotificationControlsListener(NotificationControlsListener notificationControlsListener) {
+        wifeService.setNotificationControlsListener(notificationControlsListener);
+    }
     public String getPlayUrl(){
         return playUrl;
     }

@@ -6,13 +6,14 @@ public class Song {
     private String artist;
     private String album;
     private String title;
+    private String artUrl;
     private Bitmap art;
 
-    public Song(String artist, String album, String title, Bitmap art) {
+    public Song(String artist, String album, String title, String artUrl) {
         this.artist = artist;
         this.album = album;
         this.title = title;
-        this.art = art;
+        this.artUrl = artUrl;
     }
 
     public Song(String artist, String album, String title) {
@@ -40,6 +41,10 @@ public class Song {
 
     public Bitmap getArt() {
         return art;
+    }
+
+    public String getArtUrl() {
+        return artUrl;
     }
 
     public void setArt(Bitmap art) {
