@@ -5,8 +5,13 @@ import android.content.ComponentName;
 import android.content.Context;
 import android.content.Intent;
 import android.media.AudioManager;
+import android.os.Handler;
+import android.os.Looper;
+import android.util.Log;
 import android.view.KeyEvent;
+import android.widget.Toast;
 
+import java.lang.ref.WeakReference;
 import java.util.Timer;
 import java.util.TimerTask;
 
@@ -47,19 +52,30 @@ public class HeadsetActionButtonReceiver extends BroadcastReceiver {
 
     public interface Delegate {
         void onMediaButtonSingleClick();
-
         void onMediaButtonDoubleClick();
-
         void onMediaButtonTripleClick();
     }
 
     @Override
     public void onReceive(Context context, Intent intent) {
+
         if (intent == null || delegate == null || !Intent.ACTION_MEDIA_BUTTON.equals(intent.getAction())) {
             return;
         }
 
-        KeyEvent keyEvent = (KeyEvent) intent.getExtras().get(Intent.EXTRA_KEY_EVENT);
+        final KeyEvent keyEvent = (KeyEvent) intent.getExtras().get(Intent.EXTRA_KEY_EVENT);
+
+        // BLUETOOTH DEBUG CODE
+//        if (keyEvent != null) {
+//            final WeakReference<Context> weakReference = new WeakReference<>(context);
+//            new Handler(Looper.getMainLooper()).post(new Runnable() {
+//                @Override
+//                public void run() {
+//                    Toast.makeText(weakReference.get(),"key event: "+keyEvent.toString(), Toast.LENGTH_LONG).show();
+//                }
+//            });
+//        }
+
         if (keyEvent == null || keyEvent.getAction() != KeyEvent.ACTION_DOWN) {
             return;
         }

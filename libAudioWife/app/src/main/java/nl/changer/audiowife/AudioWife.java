@@ -671,7 +671,6 @@ public class AudioWife{
 		} catch (Exception e) {
 			e.printStackTrace();
 		}
-		mMediaPlayer.setOnPreparedListener();
 		mMediaPlayer.setOnCompletionListener(mOnCompletion);
 	}
 
@@ -793,9 +792,10 @@ public class AudioWife{
 
 	private void registerMediaButtonHandler(final Context context) {
 		if (mediaButtonHandler != null) {
-			return;
+            return;
 		}
-		mediaButtonHandler = new Handler();
+
+        mediaButtonHandler = new Handler();
 		HeadsetActionButtonReceiver.delegate = new HeadsetActionButtonReceiver.Delegate() {
 			@Override
 			public void onMediaButtonSingleClick() {
@@ -856,7 +856,8 @@ public class AudioWife{
 				}
 			}
 		};
-		HeadsetActionButtonReceiver.register(context);
+
+        HeadsetActionButtonReceiver.register(context);
 	}
 
 	private void unregisterMediaButtonHandler() {
