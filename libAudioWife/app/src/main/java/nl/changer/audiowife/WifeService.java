@@ -1,5 +1,6 @@
 package nl.changer.audiowife;
 
+import android.annotation.SuppressLint;
 import android.annotation.TargetApi;
 import android.app.Notification;
 import android.app.NotificationManager;
@@ -10,7 +11,6 @@ import android.content.Context;
 import android.content.Intent;
 import android.content.IntentFilter;
 import android.graphics.Bitmap;
-import android.graphics.BitmapFactory;
 import android.media.AudioManager;
 import android.media.MediaMetadata;
 import android.media.MediaPlayer;
@@ -22,6 +22,7 @@ import android.net.wifi.WifiManager;
 import android.os.AsyncTask;
 import android.os.Binder;
 import android.os.Build;
+import android.os.Build.VERSION_CODES;
 import android.os.IBinder;
 import android.os.PowerManager;
 import android.support.v4.app.NotificationCompat;
@@ -35,10 +36,6 @@ import android.widget.TextView;
 
 import com.antoniotari.audiosister.GetBitmapAsyncTask;
 import com.antoniotari.audiosister.models.Song;
-
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.HttpURLConnection;
 
 import static nl.changer.audiowife.WifeService.MediaActions.ACTION_FAST_FORWARD;
 import static nl.changer.audiowife.WifeService.MediaActions.ACTION_NEXT;
@@ -140,6 +137,7 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
         return new Notification.Action.Builder(icon, title, pendingIntent).build();
     }
 
+    @SuppressLint ("StaticFieldLeak")
     @TargetApi(Build.VERSION_CODES.LOLLIPOP)
     private void buildNotification(final Notification.Action action ) {
 
@@ -160,7 +158,6 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
                 @Override
                 protected void onPostExecute(Bitmap bitmap) {
                     super.onPostExecute(bitmap);
-
                     // do not recursively call buildNotification if there's no image
                     if (bitmap != null) {
                         mCurrentSong.setArt(bitmap);
@@ -233,17 +230,19 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
 
         // REGISTER RECEIVER THAT HANDLES SCREEN ON AND SCREEN OFF LOGIC
         // to show the notification on lock screen
-        IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
-        filter.addAction(Intent.ACTION_SCREEN_OFF);
-        BroadcastReceiver mReceiver = new BroadcastReceiver() {
-            @Override
-            public void onReceive(Context context, Intent intent) {
-                if (mediaPlayer()!=null && mediaPlayer().isPlaying()) {
-                    generatePlayNotification();
+        if (Build.VERSION.SDK_INT < VERSION_CODES.O) {
+            IntentFilter filter = new IntentFilter(Intent.ACTION_SCREEN_ON);
+            filter.addAction(Intent.ACTION_SCREEN_OFF);
+            BroadcastReceiver receiver = new BroadcastReceiver() {
+                @Override
+                public void onReceive(Context context, Intent intent) {
+                    if (mediaPlayer() != null && mediaPlayer().isPlaying()) {
+                        generatePlayNotification();
+                    }
                 }
-            }
-        };
-        registerReceiver(mReceiver, filter);
+            };
+            registerReceiver(receiver, filter);
+        }
     }
 
     /**
@@ -338,11 +337,12 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
 
             case AudioManager.AUDIOFOCUS_LOSS:
                 // Lost focus for an unbounded amount of time: stop playback and release media player
-                if (mediaPlayer().isPlaying()) {
+                if (mediaPlayer() != null && mediaPlayer().isPlaying()) {
                     mediaPlayer().stop();
                 }
-                mediaPlayer().release();
-//                mediaPlayer() = null;
+                if (mediaPlayer() != null) {
+                    mediaPlayer().release();
+                }
                 break;
 
             case AudioManager.AUDIOFOCUS_LOSS_TRANSIENT:
@@ -409,13 +409,6 @@ public class WifeService extends Service implements AudioListener,ForegroundNoti
     private void showForegroundControls(Class theActivity, String songName, int iconRes){
         // assign the song name to songName
         PendingIntent pi = createActivityPendingIntent(theActivity);
-        //_currentNotification = new Notification();
-        //_currentNotification.tickerText = songName;
-        //_currentNotification.icon = iconRes;
-        //_currentNotification.flags |= Notification.FLAG_ONGOING_EVENT;
-        //_currentNotification.setLatestEventInfo(getApplicationContext(), getApplicationInfo().loadLabel(getPackageManager()).toString(),
-        //        "Playing: " + songName, pi);
-
         _currentNotification = new NotificationCompat.Builder(this)
                 .setContentIntent(pi)
                 .setSmallIcon(iconRes)
