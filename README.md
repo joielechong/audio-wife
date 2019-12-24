@@ -5,21 +5,21 @@ Index
 
 * [Why this project?](https://github.com/jaydeepw/audio-wife#why-this-project)
 
-* [Including in your own project](https://github.com/jaydeepw/audio-wife#including-in-your-project)
+* [Including in your own project](https://github.com/joielechong/audio-wife#including-in-your-project)
 
-* [Getting started](https://github.com/jaydeepw/audio-wife#getting-started)
+* [Getting started](https://github.com/joielechong/audio-wife#getting-started)
 
-* [Add custom listeners](https://github.com/jaydeepw/audio-wife#add-custom-listeners)
+* [Add custom listeners](https://github.com/joielechong/audio-wife#add-custom-listeners)
 
-* [Why the name 'AudioWife'?](https://github.com/jaydeepw/audio-wife#why-the-name-audiowife)
+* [Why the name 'AudioWife'?](https://github.com/joielechong/audio-wife#why-the-name-audiowife)
 
-* [Contributing](https://github.com/jaydeepw/audio-wife#contributing)
+* [Contributing](https://github.com/joielechong/audio-wife#contributing)
 
-* [Developed by](https://github.com/jaydeepw/audio-wife#developed-by)
+* [Developed by](https://github.com/joielechong/audio-wife#developed-by)
 
-* [Credits](https://github.com/jaydeepw/audio-wife#credits)
+* [Credits](https://github.com/joielechong/audio-wife#credits)
 
-* [License](https://github.com/jaydeepw/audio-wife#license)
+* [License](https://github.com/joielechong/audio-wife#license)
 
 
 
@@ -59,18 +59,12 @@ Features
 =========
 1. Provides default UI truly making it an integrable player.
 2. Ability to set multiple custom click handlers to play and pause buttons.
-3. No dependencies.
 
 
 Including in your project
 =========================
 
 AudioWife is presented as an [Android library project][1].
-
-You can include this project by [referencing it as a library project][2] in
-Eclipse or ant.
-
-This project has NO DEPENDENCIES.
 
 
 Download
@@ -189,7 +183,7 @@ Contributing
 =========================
 
 Please fork this repository and contribute back using
-[pull requests](https://github.com/jaydeepw/audio-wife/pulls).
+[pull requests](https://github.com/joielechong/audio-wife/pulls).
 
 Please follow Android coding [style guide](https://source.android.com/source/code-style.html)
 
