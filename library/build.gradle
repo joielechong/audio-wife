@@ -8,8 +8,8 @@ android {
     //applicationId "nl.changer.audiowife"
     minSdkVersion 14
     targetSdkVersion 29
-    versionCode 1
-    versionName "1.1"
+    versionCode 104
+    versionName "1.0.4"
   }
   buildTypes {
     release {

@@ -66,6 +66,13 @@ Including in your project
 
 AudioWife is presented as an [Android library project][1].
 
+Add jitpack.io maven to your build.gradle:
+
+Gradle:
+```groovy
+
+    maven { url 'https://jitpack.io' }
+```
 
 Download
 --------
@@ -73,7 +80,7 @@ Gradle:
 ```groovy
 
 {
-	compile 'net.the4thdimension:audio-wife:1.0.3'
+	compile 'com..github.joielechong:audio-wife:1.0.4'
 }
 
 ```
